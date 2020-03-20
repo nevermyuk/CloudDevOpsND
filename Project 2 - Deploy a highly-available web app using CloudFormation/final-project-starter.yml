@@ -215,7 +215,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 103.252.203.27/32
+          CidrIp: 103.252.203.27/32 # My hardcoded IP
         SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: 80
@@ -288,10 +288,9 @@ Resources:
             apt-get install apache2 -y
             systemctl start apache2.service
             cd /var/www/html
-            aws s3 cp s3://quan-udragram/udacity.zip .
+            aws s3 cp s3://quan-udagram/udacity.zip .
             unzip -o udacity.zip
         ImageId: ami-09a4a9ce71ff3f20b
-        KeyName: Private-server-devops-key
         SecurityGroups:
         - Ref: ServerSecGroup
         InstanceType: t2.medium
@@ -357,3 +356,13 @@ Resources:
         Protocol: HTTP
         UnhealthyThresholdCount: 5
         VpcId: !Ref VPC
+
+Outputs:
+    LoadBalancerURL:
+      Description: Load Balancer URL
+      Value: !Sub
+        - |
+          http://${LBURL}
+        - LBURL: !GetAtt ServerLB.DNSName
+      Export:
+        Name: !Sub ${EnvironmentName}-LB-URL
