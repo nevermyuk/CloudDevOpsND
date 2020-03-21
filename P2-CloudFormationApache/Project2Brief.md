@@ -43,9 +43,9 @@ One of the output exports of the **CloudFormation** script should be the public 
 
 Bonus points if you add `http://` in front of the load balancer **DNS Name** in the output, for convenience.
 
-### Starter code 
+### [Starter](https://video.udacity-data.com/topher/2019/July/5d391e8b_final-project-starter/final-project-starter.yml) code 
 
-In the same folder
+
 
 ## Other Considerations
 
@@ -69,3 +69,4 @@ If you want to go the extra mile, set up a bastion host to allow you to SSH into
 
 Last thing: Remember to delete your **CloudFormation** stack when you're done to avoid recurring charges!
 
+[Rubric](https://review.udacity.com/#!/rubrics/2556/view)

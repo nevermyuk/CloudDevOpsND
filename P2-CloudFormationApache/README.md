@@ -1,8 +1,3 @@
-## [URL of LoadBalancer](http://apach-serve-2jyzax5utm2f-1674398516.ap-southeast-1.elb.amazonaws.com/)
-
-- http://apach-serve-2jyzax5utm2f-1674398516.ap-southeast-1.elb.amazonaws.com/
-- Instance Private IP has been embedded into Index.html
-
 ## Overview
 
 ![Architecture](./Architecture.png)
@@ -100,6 +95,4 @@ ssh -i Private-server-devops-key.pem ubuntu@ApacheinstanceIP
 ```
 
 
-
-![Output](./Output.png)
 
