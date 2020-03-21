@@ -2,10 +2,9 @@
   {
      "ParameterKey":"EnvironmentName",
      "ParameterValue": "Udagram"
-
   },
   {
-     "ParameterKey": "VpcCIDR",
-     "ParameterValue": "10.0.0.0/16"
+   "ParameterKey": "AdminIP",
+   "ParameterValue": "103.252.203.27/32"
   }
 ]

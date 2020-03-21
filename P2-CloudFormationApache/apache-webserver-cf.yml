@@ -1,5 +1,9 @@
 Description: >
     Quan / Project 2 - Udagram
+    1 Internet-facing ALB that connects to Apache target group in private subnet.
+    1 ASG with CloudWatch Alarms and Scaling Policy.
+    2AZs - 1 Public Subnet and 1 Private Subnet each 
+    1 Bastion host in Public Subnet 1 that has access
 
 Parameters:
 
@@ -31,6 +35,22 @@ Parameters:
         Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
         Type: String
         Default: 10.0.3.0/24
+
+    ServerAMI:
+        Description: Please enter Ubuntu AMI ImageID for Apache Instances
+        Type: String
+        Default: ami-09a4a9ce71ff3f20b
+
+    BastionAMI:
+        Description: Please enter Ubuntu AMI ImageID for Bastion Host
+        Type: String
+        Default: ami-0cbc6aae997c6538a
+
+    AdminIP:
+        Description: Please provide your IP for access into Bastion host.
+        Type: String
+        
+
 
 Resources:
 # VPC NETWORKING
@@ -215,26 +235,30 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 103.252.203.27/32 # My hardcoded IP
+          CidrIp: !Ref AdminIP
         SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
 
     Bastionhost: 
       Type: AWS::EC2::Instance
       Properties: 
-        ImageId: "ami-0cbc6aae997c6538a"
-        KeyName: "BastionKey"
+        ImageId: !Ref BastionAMI
+        KeyName: BastionKey
         InstanceType: t2.micro
         NetworkInterfaces: 
           - AssociatePublicIpAddress: "true"
             DeviceIndex: "0"
             GroupSet: 
-              - Ref: "BastionSecGroup"
+              - Ref: BastionSecGroup
             SubnetId: 
-              Ref: "PublicSubnet1"
+              Ref: PublicSubnet1
 
 
 
@@ -281,16 +305,20 @@ Resources:
       Type: AWS::AutoScaling::LaunchConfiguration
       Properties:
         UserData:
-          Fn::Base64: !Sub |
-            #!/bin/bash
-            apt-get update -y
-            apt-get install unzip awscli -y
-            apt-get install apache2 -y
-            systemctl start apache2.service
-            cd /var/www/html
-            aws s3 cp s3://quan-udagram/udacity.zip .
-            unzip -o udacity.zip
-        ImageId: ami-09a4a9ce71ff3f20b
+          Fn::Base64: 
+            !Sub |
+              #!/bin/bash
+              apt-get update -y
+              apt-get install unzip awscli -y
+              apt-get install apache2 -y
+              systemctl start apache2.service
+              cd /var/www/html
+              aws s3 cp s3://quan-udagram/udacity.zip .
+              unzip -o udacity.zip
+              LOCAL_IP=`curl -sL http://169.254.169.254/latest/meta-data/local-ipv4`
+              echo $LOCAL_IP >> index.html
+        ImageId: !Ref ServerAMI
+        KeyName: Private-server-devops-key
         SecurityGroups:
         - Ref: ServerSecGroup
         InstanceType: t2.medium
@@ -356,6 +384,61 @@ Resources:
         Protocol: HTTP
         UnhealthyThresholdCount: 5
         VpcId: !Ref VPC
+
+
+# Scaling Policy
+    ServerScaleUpPolicy:
+      Type: AWS::AutoScaling::ScalingPolicy
+      Properties:
+        AdjustmentType: ChangeInCapacity
+        AutoScalingGroupName:
+          Ref: AppGroup
+        Cooldown: '120'
+        ScalingAdjustment: '1'
+
+    ServerScaleDownPolicy:
+      Type: AWS::AutoScaling::ScalingPolicy
+      Properties:
+        AdjustmentType: ChangeInCapacity
+        AutoScalingGroupName:
+          Ref: AppGroup
+        Cooldown: '120'
+        ScalingAdjustment: '-1'
+
+    CPUAlarmHigh:
+      Type: 'AWS::CloudWatch::Alarm'
+      Properties:
+        AlarmDescription: Scale-up if CPU is greater than 90% for 10 minutes
+        MetricName: CPUUtilization
+        Namespace: AWS/EC2
+        Statistic: Average
+        Period: '300'
+        EvaluationPeriods: '2'
+        Threshold: '90'
+        AlarmActions:
+          - !Ref ServerScaleUpPolicy
+        Dimensions:
+          - Name: AutoScalingGroupName
+            Value: !Ref AppGroup
+        ComparisonOperator: GreaterThanThreshold
+
+    CPUAlarmLow:
+      Type: 'AWS::CloudWatch::Alarm'
+      Properties:
+        AlarmDescription: Scale-down if CPU is less than 70% for 10 minutes
+        MetricName: CPUUtilization
+        Namespace: AWS/EC2
+        Statistic: Average
+        Period: '300'
+        EvaluationPeriods: '2'
+        Threshold: '70'
+        AlarmActions:
+          - !Ref ServerScaleDownPolicy
+        Dimensions:
+          - Name: AutoScalingGroupName
+            Value: !Ref AppGroup
+        ComparisonOperator: LessThanThreshold
+
 
 Outputs:
     LoadBalancerURL:
