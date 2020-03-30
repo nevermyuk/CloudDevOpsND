@@ -1,0 +1,1 @@
+https://github.com/nevermyuk/static
