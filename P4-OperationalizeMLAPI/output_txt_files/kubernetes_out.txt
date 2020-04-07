@@ -1,0 +1,17 @@
+NAME                        READY   STATUS    RESTARTS   AGE
+curl                        1/1     Running   3          119m
+ml-micro-5f5f7bb54d-fb586   1/1     Running   0          12m
+ml-micro-5f5f7bb54d-gdbkr   1/1     Running   0          3m9s
+ml-micro-5f5f7bb54d-qqskg   1/1     Running   0          3m9s
+Forwarding from 127.0.0.1:8000 -> 80
+Forwarding from [::1]:8000 -> 80
+Handling connection for 8000
+
+# make_prediction output
+Port: 8000
+{
+  "prediction": [
+    20.35373177134412
+  ]
+}
+

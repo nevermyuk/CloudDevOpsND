@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-micro-service
+spec:
+  selector:
+    app: ml-micro
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8000
+    targetPort: 80
+  type: LoadBalancer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-micro
+  labels: 
+    app: ml-micro
+spec:
+  selector:
+    matchLabels:
+      app: ml-micro
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: ml-micro
+    spec:
+      containers:
+      - name: ml-micro
+        image: nevermyuk/ml-micro:latest
+        ports:
+        - containerPort: 80
